@@ -174,6 +174,6 @@ class CommentFormTest(TestCase):
         self.assertEqual(Comment.objects.count(), count_comments + 1)
         self.assertRedirects(response, reverse('posts:post_detail',
                                                kwargs={
-                                                'post_id':
-                                                self.post_author.id}))
+                                                   'post_id':
+                                                   self.post_author.id}))
         self.assertEqual(comment.text, 'Тестовый комментарий')
