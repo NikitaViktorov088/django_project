@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
+
 from posts.models import Comment, Group, Post, User
 
 
@@ -113,6 +114,7 @@ class PostCreateFormTests(TestCase):
             content=small_gif,
             content_type='image/gif'
         )
+
         form_data = {
             'text': 'Пост с картинкой',
             'group': self.group.id,
@@ -134,6 +136,13 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(author.username, 'test_user')
         self.assertEqual(group.title, 'Заголовок для тестовой группы')
 
+    def test_post_with_trash(self):
+        temp_file = tempfile.TemporaryFile()
+        err = 'Отправленный файл пуст.'
+        response = self.authorized_client.post(
+            reverse('posts:post_create'), {'image': temp_file})
+        self.assertFormError(response, 'form', 'image', err)
+
 
 class CommentFormTest(TestCase):
     @classmethod
@@ -142,8 +151,7 @@ class CommentFormTest(TestCase):
         cls.user_author = User.objects.create_user(username='test_author')
         cls.post_author = Post.objects.create(
             author=cls.user_author,
-            text='Тестовый пост автора',
-            id='1'
+            text='Тестовый пост автора'
         )
 
     def setUp(self):
@@ -157,12 +165,15 @@ class CommentFormTest(TestCase):
             'text': 'Тестовый комментарий'
         }
         response = self.authorized_author.post(
-            reverse('posts:add_comment', kwargs={'post_id': '1'}),
+            reverse('posts:add_comment',
+                    kwargs={'post_id': self.post_author.id}),
             data=form_data,
             follow=True
         )
         comment = Comment.objects.get()
         self.assertEqual(Comment.objects.count(), count_comments + 1)
         self.assertRedirects(response, reverse('posts:post_detail',
-                                               kwargs={'post_id': '1'}))
+                                               kwargs={
+                                                'post_id':
+                                                self.post_author.id}))
         self.assertEqual(comment.text, 'Тестовый комментарий')
