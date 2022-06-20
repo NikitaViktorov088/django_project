@@ -95,3 +95,9 @@ class Follow(models.Model):
         )
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
+        constraints = [
+            models.CheckConstraint(
+                check=~models.Q(user=models.F('author')),
+                name='check_user_not_equal_author',
+            ),
+        ]
